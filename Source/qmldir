@@ -1,0 +1,5 @@
+module Qtino.DynamicSvg
+plugin DynamicSvg
+classname DynamicSvgPlugin
+typeinfo plugins.qmltypes
+
