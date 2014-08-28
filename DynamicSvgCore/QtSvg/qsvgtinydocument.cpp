@@ -52,6 +52,8 @@
 #include "qstack.h"
 #include "qdebug.h"
 
+#include "qresource.h"
+
 #ifndef QT_NO_COMPRESS
 #include <zlib.h>
 #endif
@@ -167,6 +169,20 @@ QByteArray qt_inflateGZipDataFrom(QIODevice *device)
 
 QSvgTinyDocument * QSvgTinyDocument::load(const QString &fileName)
 {
+    if (QUrl(fileName).scheme() == "qrc")
+    {
+        QResource resource(QUrl(fileName).path());
+        if (!resource.isValid()) {
+            qWarning("Cannot open resource '%s' because it is not a valid resource file",
+                     qPrintable(QUrl(fileName).path()));
+            return 0;
+        }
+        if (resource.isCompressed())
+            return load(qUncompress(resource.data(), resource.size()));
+        else
+            return load(QByteArray::fromRawData((const char*)(resource.data()), resource.size()));
+    }
+
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly)) {
         qWarning("Cannot open file '%s', because: %s",

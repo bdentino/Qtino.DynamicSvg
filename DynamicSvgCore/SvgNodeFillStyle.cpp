@@ -8,7 +8,6 @@ SvgNodeFillStyle::SvgNodeFillStyle(QQuickItem* parent)
       m_fillRule(Qt::WindingFill),
       m_opacity(1.0)
 {
-    connect(this, SIGNAL(fillUpdated()), this, SLOT(update()));
 }
 
 Qt::FillRule SvgNodeFillStyle::fillRule() const
@@ -47,7 +46,7 @@ SvgNodeSolidColorStyle::SvgNodeSolidColorStyle(QQuickItem* parent)
     : SvgNodeFillStyle(parent),
       m_color(QColor(Qt::white))
 {
-
+    connect(this, SIGNAL(colorUpdated()), this, SIGNAL(fillUpdated()));
 }
 
 const QColor& SvgNodeSolidColorStyle::color() const
@@ -59,7 +58,7 @@ void SvgNodeSolidColorStyle::setColor(QColor color)
 {
     if (m_color == color) return;
     m_color = color;
-    emit fillUpdated();
+    emit colorUpdated();
 }
 
 void SvgNodeSolidColorStyle::applyToNode(QSvgNode* node)
@@ -74,7 +73,7 @@ void SvgNodeSolidColorStyle::applyToNode(QSvgNode* node)
 SvgNodeGradientStyle::SvgNodeGradientStyle(QQuickItem* parent)
     : SvgNodeFillStyle(parent)
 {
-
+    connect(this, SIGNAL(gradientUpdated()), this, SIGNAL(fillUpdated()));
 }
 
 const QGradient& SvgNodeGradientStyle::gradient() const
@@ -86,7 +85,7 @@ void SvgNodeGradientStyle::setGradient(QGradient gradient)
 {
     if (m_gradient == gradient) return;
     m_gradient = gradient;
-    emit fillUpdated();
+    emit gradientUpdated();
 }
 
 void SvgNodeGradientStyle::applyToNode(QSvgNode* node)

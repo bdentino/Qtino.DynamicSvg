@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>DynamicSvgDemo.qml</file>
+        <file>icon.svg</file>
+    </qresource>
+</RCC>

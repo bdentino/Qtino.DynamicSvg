@@ -6,14 +6,7 @@ CONFIG += qt plugin
 TARGET = $$qtLibraryTarget($$TARGET)
 uri = Qtino.DynamicSvg
 
-# Input
-SOURCES += \
-    *.cpp
-
-HEADERS += \
-    *.h
-
-OTHER_FILES = qmldir
+latest_version = 0.1
 
 QMAKE_MOC_OPTIONS += -Muri=$$uri
 
@@ -27,16 +20,37 @@ QMAKE_MOC_OPTIONS += -Muri=$$uri
 
 installPath = $$[QT_INSTALL_QML]/$$replace(uri, \\., /)
 
+unix: { libprefix = lib }
+win32: { libprefix = }
+
+CONFIG(static, static|shared) {
+    macx|ios|unix: { libsuffix = a }
+    win32: { libsuffix = lib }
+}
+else {
+    macx: { libsuffix = dylib }
+    unix:!macx: { libsuffix = so }
+    win32: { libsuffix = lib }
+}
+
 cleanTarget.files +=
 cleanTarget.path += $$installPath
-macx: cleanTarget.extra = rm -rf $$installPath
-ios: cleanTarget.extra = rm -rf $$installPath
+macx|ios|unix: cleanTarget.extra = rm -rf $$installPath/qmldir $$installPath/plugins.qmltypes $$installPath/$$libprefix$$TARGET$${qtPlatformTargetSuffix}.$$libsuffix
 
 qmldir.files = qmldir
 qmldir.path = $$installPath
 target.path = $$installPath
 
-INSTALLS += target qmldir
+plugindump.files +=
+plugindump.path = $$installPath
+plugindump.extra = qmlplugindump $$uri $$latest_version > $$_PRO_FILE_PWD_/plugins.qmltypes
+
+qmltypes.files += $$_PRO_FILE_PWD_/plugins.qmltypes
+qmltypes.path = $$installPath
+
+INSTALLS += cleanTarget target qmldir
+macx|win32|linux: INSTALLS += plugindump
+INSTALLS += qmltypes
 
 QT  += core-private gui-private
 qtHaveModule(widgets): QT += widgets-private
@@ -45,6 +59,18 @@ DEFINES   += QT_NO_USING_NAMESPACE
 win32-msvc*|win32-icc:QMAKE_LFLAGS += /BASE:0x66000000
 solaris-cc*:QMAKE_CXXFLAGS_RELEASE -= -O2
 
+# Input
+SOURCES += \
+    *.cpp
+
+HEADERS += \
+    *.h
+
+OTHER_FILES = qmldir
+
+QMAKE_POST_LINK = make install
+
+# QtSvg Sources
 HEADERS += \
     QtSvg/qsvggraphics_p.h        \
     QtSvg/qsvghandler_p.h         \

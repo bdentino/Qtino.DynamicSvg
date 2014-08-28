@@ -10,9 +10,6 @@ SvgNodeRef::SvgNodeRef(DynamicSvg* parent)
       m_defaultStyle(NULL),
       m_svg(parent)
 {
-    if (!parent) {
-        qWarning("SvgNodeRef Warning: Creating a NodeRef without a parent of type DynamicSvg.");
-    }
     setSvg(parent);
     connect(this, SIGNAL(nodeIdChanged()), this, SLOT(triggerUpdate()));
     connect(this, SIGNAL(styleChanged()), this, SLOT(triggerUpdate()));
@@ -30,6 +27,7 @@ void SvgNodeRef::setSvg(DynamicSvg* svg)
     m_svg = svg;
     connect(m_svg, SIGNAL(sourceChanged()), this, SIGNAL(validChanged()));
     initDefaultStyle();
+    triggerUpdate();
     emit validChanged();
 }
 
@@ -62,12 +60,12 @@ void SvgNodeRef::setStyle(SvgNodeStyle* style)
 
     m_style = style;
     connect(m_style, SIGNAL(styleUpdated()), this, SLOT(triggerUpdate()));
+    triggerUpdate();
     emit styleChanged();
 }
 
 void SvgNodeRef::initDefaultStyle()
 {
-    qDebug() << "Initializing Default Style";
     if (m_defaultStyle)
     {
         delete m_defaultStyle;
@@ -75,7 +73,6 @@ void SvgNodeRef::initDefaultStyle()
     }
     if (!valid())
     {
-        qDebug() << "Returning (not valid). m_svg" << m_svg << m_nodeId;
         emit defaultStyleChanged();
         return;
     }
@@ -103,6 +100,7 @@ void SvgNodeRef::triggerUpdate()
     if (valid() && m_style) {
         m_style->applyToNode(m_svg->node(m_nodeId));
     }
-    update();
-    if (m_svg) m_svg->update();
+    if (m_svg) {
+        m_svg->renderSvg();
+    }
 }
