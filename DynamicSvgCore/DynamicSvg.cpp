@@ -85,16 +85,18 @@ void DynamicSvg::renderSvg()
     transform.scale(scale.width(), scale.height());
     bounds = transform.mapRect(bounds);
 
-    if (m_cachedImage) delete m_cachedImage;
-    m_cachedImage = new QImage(finalSize, QImage::Format_ARGB32_Premultiplied);
+    if (!m_cachedImage) {
+        m_cachedImage = new QImage(finalSize, QImage::Format_ARGB32_Premultiplied);
+    }
+    else if (m_cachedImage->size() != finalSize) {
+        delete m_cachedImage;
+        m_cachedImage = new QImage(finalSize, QImage::Format_ARGB32_Premultiplied);
+    }
     m_cachedImage->fill(Qt::transparent);
     QPainter imgPainter(m_cachedImage);
     m_renderer.render(&imgPainter, bounds);
 
-    QSGTexture* texture = window()->createTextureFromImage(QImage(*m_cachedImage));
-
-    m_ownedTextures.append(texture);
-    m_texProvider->updateTexture(texture);
+    update();
 }
 
 QImage* DynamicSvg::svgImage()
@@ -105,13 +107,13 @@ QImage* DynamicSvg::svgImage()
 
 void DynamicSvg::setupTexProvider()
 {
+    //This provider is actually not used anymore...need to take out
     if (!m_texProvider) {
         m_texProvider = new DynamicSvgTextureProvider();
         m_texProvider->m_smooth = true;
         m_texProvider->m_mipmap = false;
         renderSvg();
     }
-    connect(m_texProvider, SIGNAL(textureChanged()), this, SLOT(update()));
 }
 
 QSGTextureProvider* DynamicSvg::textureProvider() const
@@ -157,11 +159,24 @@ QSGNode* DynamicSvg::updatePaintNode(QSGNode* node, UpdatePaintNodeData*)
         ((QSGSimpleTextureNode*)node)->setRect(this->boundingRect());
     }
     QSGSimpleTextureNode* textureNode = ((QSGSimpleTextureNode*)node);
-    textureNode->setTexture(m_texProvider->texture());
+
+    QSGTexture* texture = window()->createTextureFromImage(*m_cachedImage,
+          QQuickWindow::TextureOwnsGLTexture);
+    m_ownedTextures.append(texture);
+    textureNode->setTexture(texture);
+
     qreal dpr = window() ? window()->devicePixelRatio() : 1.0;
     int width = textureNode->texture()->textureSize().width() / dpr;
     int height = textureNode->texture()->textureSize().height() / dpr;
     textureNode->setRect(0, 0, width, height);
+
+    //clear old textures
+    foreach (QSGTexture* tex, m_ownedTextures) {
+        if (tex != texture) {
+            m_ownedTextures.removeAll(tex);
+            tex->deleteLater();
+        }
+    }
 
     return node;
 }
