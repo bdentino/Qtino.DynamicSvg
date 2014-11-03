@@ -22,6 +22,10 @@ DynamicSvg::DynamicSvg(QQuickItem* parent)
             this, SLOT(renderSvg()));
     connect(this, SIGNAL(nodeRefsChanged()),
             this, SLOT(renderSvg()));
+
+    if (window()) {
+        connect(window(), SIGNAL(sceneGraphInitialized()), this, SLOT(onSceneGraphInitialized()));
+    }
 }
 
 DynamicSvg::~DynamicSvg()
@@ -140,7 +144,10 @@ void DynamicSvg::componentComplete()
 void DynamicSvg::onWindowChanged(QQuickWindow* window)
 {
     if (!window) { this->deleteLater(); return; }
-    connect(window, SIGNAL(sceneGraphInitialized()), this, SLOT(onSceneGraphInitialized()));
+    if (window->openglContext())
+        onSceneGraphInitialized();
+    else
+        connect(window, SIGNAL(sceneGraphInitialized()), this, SLOT(onSceneGraphInitialized()));
     setupTexProvider();
 }
 

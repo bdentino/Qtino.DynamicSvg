@@ -2,6 +2,7 @@ TEMPLATE = lib
 TARGET = DynamicSvg
 QT += qml quick
 CONFIG += qt plugin
+android { CONFIG -= android_install }
 
 TARGET = $$qtLibraryTarget($$TARGET)
 uri = Qtino.DynamicSvg
@@ -49,7 +50,7 @@ qmltypes.files += $$_PRO_FILE_PWD_/plugins.qmltypes
 qmltypes.path = $$installPath
 
 INSTALLS += cleanTarget target qmldir
-macx|win32|linux: INSTALLS += plugindump
+macx|win32|linux:!android { INSTALLS += plugindump }
 INSTALLS += qmltypes
 
 QT  += core-private gui-private
@@ -82,7 +83,7 @@ HEADERS += \
     QtSvg/qsvgrenderer.h          \
     QtSvg/qsvgwidget.h            \
     QtSvg/qgraphicssvgitem.h      \
-    QtSvg/qsvggenerator.h \
+    QtSvg/qsvggenerator.h         \
     QtSvg/qtsvgglobal.h
 
 
